@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regex Matcher</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Regex Matcher</h1>
+
+    <!-- Regex Input Form -->
+    <section id="regexSection" class="container">
+        <h2>Regular Expression Matcher</h2>
+        <form id="regexForm" class="form-container">
+            <label for="test_string">Test String:</label>
+            <input type="text" id="test_string" name="test_string" required><br><br>
+            <label for="regex">Regex:</label>
+            <input type="text" id="regex" name="regex" required><br>
+            <small id="regexResult" style="color: red;"></small><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <small id="matchesResult"></small>
+    </section>
+
+    <!-- Email Validation -->
+    <section id="emailValidationSection" class="container">
+        <h2>Email Validation</h2>
+        <form id="emailValidationForm" class="form-container">
+            <label for="email">Enter Email:</label>
+            <input type="email" id="email" name="email" required>
+            <input type="submit" value="Validate">
+            <div id="emailValidationResult"></div>
+        </form>
+    </section>
+
+    <!-- Text Sections -->
+    <section class="text-section container">
+        <h2>Text Strings</h2>
+        <ul id="textStringsList">
+            <li>Text strings are sequences of characters, such as words or phrases, that are used as input data for various operations or analyses.</li>
+            <li>For example, "apple, banana, orange" and "watermelon, kiwi, melon" are text strings containing names of fruits separated by commas.</li>
+            <li>Text strings can contain alphanumeric characters, punctuation, whitespace, and other symbols.</li>
+        </ul>
+    </section>
+
+    <section class="text-section container">
+        <h2>Regular Expressions</h2>
+        <ul id="regexList">
+            <li>Regular expressions (regex) are patterns used to match character combinations in strings.</li>
+            <li>They are commonly used for searching, extracting, and validating specific patterns of text.</li>
+            <li>For example, "\b[a-zA-Z]+\b" matches words containing only alphabetic characters.</li>
+        </ul>
+    </section>
+
+    <section class="text-section container">
+        <h2>Emails</h2>
+        <p>Emails are electronic messages sent over a computer network, typically the internet, from one person to another.</p>
+        <h3>Valid</h3>
+        <ul id="validEmailsList">
+            <li>Valid email addresses adhere to specific syntax rules and can be successfully delivered to recipients.</li>
+            <li>For example, "user@example.com" and "test@example.com" are valid email addresses.</li>
+        </ul>
+        <h3>Invalid</h3>
+        <ul id="invalidEmailsList">
+            <li>Invalid email addresses do not conform to the syntax rules and may fail to be delivered or rejected by email servers.</li>
+            <li>For example, "user@example" and "test@example." are invalid email addresses.</li>
+        </ul>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+        document.getElementById("regexForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var testString = document.getElementById("test_string").value;
+            var regexPattern = document.getElementById("regex").value;
+            var regexResult = document.getElementById("regexResult");
+            if (testString.match(new RegExp(regexPattern))) {
+                regexResult.innerText = "Valid Regex";
+                regexResult.style.color = "green";
+                // Fetch and display the matches
+                fetch('/results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ test_string: testString, regex: regexPattern })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch matches');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    var matchesResult = document.getElementById("matchesResult");
+                    matchesResult.innerText = "Matches Found: " + data.matches.join(", ");
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching matches: ' + error.message);
+                });
+            } else {
+                regexResult.innerText = "Invalid Regex";
+                regexResult.style.color = "red";
+            }
+            setTimeout(function() {
+                regexResult.innerText = "";
+            }, 3000); // Clear result after 3 seconds
+        });
+
+        document.getElementById("emailValidationForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var email = document.getElementById("email").value;
+            // Send the email to the server for validation
+            fetch('/validate_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({email: email})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to validate email');
+                }
+                return response.text();
+            })
+            .then(result => {
+                if (result === 'Valid Email') {
+                    document.getElementById("emailValidationResult").innerHTML = "<span style='color:green;'>Valid Email</span>";
+                } else {
+                    document.getElementById("emailValidationResult").innerHTML = "<span style='color:red;'>Invalid Email</span>";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while validating email: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>
